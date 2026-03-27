@@ -22,7 +22,6 @@ jobs:
           CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
         run: |
-          # Create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
@@ -30,7 +29,6 @@ jobs:
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-          # Import certificate
           CERT_PATH=$RUNNER_TEMP/certificate.p12
           echo -n "$CERTIFICATE_P12" | base64 --decode -o $CERT_PATH
           security import $CERT_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
@@ -52,15 +50,12 @@ jobs:
           sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/" project.pbxproj
           echo "Build number: $BUILD_NUMBER"
 
-      - name: Update Signing Settings
+      - name: Update Signing for Distribution
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           cd BlootScore.xcodeproj
-          # Set team ID and manual signing
           sed -i '' "s/DEVELOPMENT_TEAM = [^;]*/DEVELOPMENT_TEAM = $TEAM_ID/" project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' project.pbxproj
-          sed -i '' 's/CODE_SIGN_IDENTITY = "[^"]*"/CODE_SIGN_IDENTITY = "Apple Distribution"/' project.pbxproj
 
       - name: Build Archive
         env:
@@ -71,21 +66,19 @@ jobs:
             -scheme BlootScore \
             -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/BlootScore.xcarchive \
-            CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=$TEAM_ID \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
+            CODE_SIGN_STYLE=Automatic \
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
             -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
             -authenticationKeyIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
             COMPILER_INDEX_STORE_ENABLE=NO
 
-      - name: Create ExportOptions
+      - name: Export & Upload to TestFlight
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << PLIST
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -94,16 +87,16 @@ jobs:
               <string>app-store-connect</string>
               <key>teamID</key>
               <string>$TEAM_ID</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
               <key>uploadSymbols</key>
               <true/>
               <key>destination</key>
               <string>upload</string>
           </dict>
           </plist>
-          PLIST
+          EOF
 
-      - name: Export & Upload to TestFlight
-        run: |
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/BlootScore.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
