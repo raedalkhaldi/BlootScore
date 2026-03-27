@@ -33,6 +33,17 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
+      - name: Install Provisioning Profile
+        env:
+          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/profile.mobileprovision
+          echo -n "$PROVISIONING_PROFILE" | base64 --decode -o $PP_PATH
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          PP_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i $PP_PATH))
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
+          echo "Installed profile: $PP_UUID"
+
       - name: Setup App Store Connect API Key
         env:
           APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
@@ -41,38 +52,34 @@ jobs:
           mkdir -p ~/private_keys
           echo -n "$APPSTORE_API_KEY_P8" | base64 --decode -o ~/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8
 
-      - name: Prepare Project for Distribution
+      - name: Prepare Project
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
+          PROFILE_NAME: ${{ secrets.PROFILE_NAME }}
         run: |
           python3 << PYEOF
-          import os
+          import os, re
           team = os.environ['TEAM_ID']
+          profile = os.environ['PROFILE_NAME']
           build = os.popen("date +%Y%m%d%H%M").read().strip()
           with open('BlootScore.xcodeproj/project.pbxproj', 'r') as f:
-              content = f.read()
-          # Switch to manual signing
-          content = content.replace('CODE_SIGN_STYLE = Automatic;', 'CODE_SIGN_STYLE = Manual;')
-          # Update build number
-          import re
-          content = re.sub(r'CURRENT_PROJECT_VERSION = [^;]+', f'CURRENT_PROJECT_VERSION = {build}', content)
-          # Add distribution signing settings after each CODE_SIGN_STYLE = Manual
-          old = 'CODE_SIGN_STYLE = Manual;'
-          new = f'''CODE_SIGN_STYLE = Manual;
-          				CODE_SIGN_IDENTITY = "Apple Distribution";
-          				DEVELOPMENT_TEAM = {team};
-          				PROVISIONING_PROFILE_SPECIFIER = "";'''
-          content = content.replace(old, new)
+              c = f.read()
+          c = c.replace('CODE_SIGN_STYLE = Automatic;', 'CODE_SIGN_STYLE = Manual;')
+          c = re.sub(r'CURRENT_PROJECT_VERSION = [^;]+', f'CURRENT_PROJECT_VERSION = {build}', c)
+          # Add signing settings after each CODE_SIGN_STYLE = Manual
+          c = c.replace(
+              'CODE_SIGN_STYLE = Manual;',
+              f'CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tCODE_SIGN_STYLE = Manual;\n\t\t\t\tDEVELOPMENT_TEAM = {team};\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile}";'
+          )
           with open('BlootScore.xcodeproj/project.pbxproj', 'w') as f:
-              f.write(content)
-          print(f'Set team={team}, build={build}, manual signing with Apple Distribution')
+              f.write(c)
+          print(f'Done: team={team}, profile={profile}, build={build}')
           PYEOF
 
       - name: Build Archive
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
-          ASC_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          PROFILE_NAME: ${{ secrets.PROFILE_NAME }}
         run: |
           xcodebuild archive \
             -project BlootScore.xcodeproj \
@@ -83,10 +90,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             COMPILER_INDEX_STORE_ENABLE=NO
 
       - name: Export & Upload to TestFlight
@@ -108,6 +112,11 @@ jobs:
               <string>manual</string>
               <key>signingCertificate</key>
               <string>Apple Distribution</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.bloot.BlootScore</key>
+                  <string>BlootScore AppStore Profile</string>
+              </dict>
               <key>uploadSymbols</key>
               <true/>
               <key>destination</key>
@@ -120,11 +129,12 @@ jobs:
             -archivePath "$RUNNER_TEMP/BlootScore.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" \
-            -allowProvisioningUpdates \
             -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
-      - name: Cleanup Keychain
+      - name: Cleanup
         if: always()
-        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || true
