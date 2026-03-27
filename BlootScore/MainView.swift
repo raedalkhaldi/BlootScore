@@ -33,6 +33,12 @@ struct MainView: View {
     @State private var autoStopTask:       Task<Void, Never>?
     @State private var lastTranscript:     String = ""
 
+    // ── تعديل الجولة ────────────────────────────────────────────────────
+    @State private var editingRound:       Round?
+    @State private var editT1Text:         String = ""
+    @State private var editT2Text:         String = ""
+    @State private var showEditSheet       = false
+
     // ── مساعدات ──────────────────────────────────────────────────────────
     private var buyerRaw: Int { Int(buyerRawText) ?? 0 }
     private var team1RawDisplay: Int { buyerIsTeam1 ? buyerRaw : max(0, gameType.rawTotal - buyerRaw) }
@@ -91,7 +97,7 @@ struct MainView: View {
 
                     // ── سجل الجولات ───────────────────────────────────
                     if !vm.rounds.isEmpty {
-                        RoundHistory()
+                        RoundHistory(onEdit: { round in startEditRound(round) })
                             .padding(.horizontal)
                             .padding(.top, 20)
                     }
@@ -128,13 +134,13 @@ struct MainView: View {
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
-        .onTapGesture { rawFocused = false }
         .onChange(of: speech.autoStoppedText) { text in
             guard let text = text, !text.isEmpty, isSimpleMode else { return }
             speech.autoStoppedText = nil
             processSimpleVoice(text)
         }
         .sheet(isPresented: $showAPIKeySheet) { APIKeyView() }
+        .sheet(isPresented: $showEditSheet) { editRoundSheet }
     }
 
     // MARK: ── تبديل الوضع ───────────────────────────────────────────────
@@ -700,6 +706,94 @@ struct MainView: View {
         team2Dec = p.team2Dec
         voiceError = nil
     }
+
+    // MARK: ── تعديل الجولة ──────────────────────────────────────────────
+    @ViewBuilder
+    private var editRoundSheet: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                if let round = editingRound {
+                    Text("تعديل الجولة \(String(format: "%d", round.number))")
+                        .font(.title2.bold())
+                        .padding(.top, 20)
+
+                    HStack(spacing: 10) {
+                        VStack(spacing: 4) {
+                            Text(vm.team1Name).font(.caption).foregroundColor(c1)
+                            TextField("0", text: $editT1Text)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 38, weight: .bold, design: .rounded))
+                                .foregroundColor(c1)
+                                .multilineTextAlignment(.center)
+                                .frame(height: 52)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color(.systemGroupedBackground))
+                        .cornerRadius(10)
+
+                        VStack(spacing: 4) {
+                            Text(vm.team2Name).font(.caption).foregroundColor(c2)
+                            TextField("0", text: $editT2Text)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 38, weight: .bold, design: .rounded))
+                                .foregroundColor(c2)
+                                .multilineTextAlignment(.center)
+                                .frame(height: 52)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color(.systemGroupedBackground))
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+
+                    Button {
+                        if let t1 = Int(editT1Text), let t2 = Int(editT2Text) {
+                            vm.updateRound(id: round.id, t1: t1, t2: t2)
+                            showEditSheet = false
+                        }
+                    } label: {
+                        Text("حفظ التعديل")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+
+                    Button(role: .destructive) {
+                        vm.deleteRound(id: round.id)
+                        showEditSheet = false
+                    } label: {
+                        Text("حذف الجولة")
+                            .font(.subheadline)
+                            .foregroundColor(.red)
+                    }
+
+                    Spacer()
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("إلغاء") { showEditSheet = false }
+                }
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func startEditRound(_ round: Round) {
+        editingRound = round
+        editT1Text = String(format: "%d", round.team1Score)
+        editT2Text = String(format: "%d", round.team2Score)
+        showEditSheet = true
+    }
 }
 
 // MARK: ── DecStepper ──────────────────────────────────────────────────────
@@ -815,6 +909,7 @@ struct ProgressBar: View {
 // MARK: ── RoundHistory ────────────────────────────────────────────────────
 struct RoundHistory: View {
     @EnvironmentObject var vm: GameViewModel
+    var onEdit: ((Round) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -859,6 +954,8 @@ struct RoundHistory: View {
                     }
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .background(Color(.systemBackground))
+                    .contentShape(Rectangle())
+                    .onTapGesture { onEdit?(round) }
 
                     if idx < vm.rounds.count - 1 { Divider() }
                 }

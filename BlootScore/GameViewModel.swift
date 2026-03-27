@@ -204,6 +204,27 @@ class GameViewModel: ObservableObject {
         checkWinner()
     }
 
+    // MARK: تعديل جولة
+    func updateRound(id: UUID, t1: Int, t2: Int) {
+        guard let idx = rounds.firstIndex(where: { $0.id == id }) else { return }
+        rounds[idx].team1Score = t1
+        rounds[idx].team2Score = t2
+        rounds[idx].buyerWon = rounds[idx].buyerIsTeam1 ? (t1 >= t2) : (t2 >= t1)
+        isGameOver = false
+        winnerIndex = 0
+        checkWinner()
+    }
+
+    // MARK: حذف جولة
+    func deleteRound(id: UUID) {
+        rounds.removeAll { $0.id == id }
+        // إعادة ترقيم
+        for i in 0..<rounds.count { rounds[i].number = i + 1 }
+        isGameOver = false
+        winnerIndex = 0
+        checkWinner()
+    }
+
     // MARK: إدارة اللعبة
     func undoLastRound() {
         guard !rounds.isEmpty else { return }
