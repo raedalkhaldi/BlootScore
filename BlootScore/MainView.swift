@@ -278,20 +278,20 @@ struct MainView: View {
         lastTranscript = ""
     }
 
+    // MARK: ── المفتاح ──────────────────────────────────────────────────────
+    private var activeAPIKey: String {
+        let stored = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
+        return stored.isEmpty ? kBuiltInAPIKey : stored
+    }
+
     // MARK: ── ميكروفون الوضع المبسط ──────────────────────────────────────
     private func handleSimpleMic() {
         voiceError = nil
 
         if speech.isListening {
-            // وقف يدوي
             let text = speech.stop()
             processSimpleVoice(text)
         } else {
-            let key = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
-            if key.isEmpty {
-                showAPIKeySheet = true
-                return
-            }
             lastTranscript = ""
             simpleT1Text = ""
             simpleT2Text = ""
@@ -304,15 +304,10 @@ struct MainView: View {
         lastTranscript = text
         guard !text.isEmpty else { return }
 
-        let key = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
-        if key.isEmpty {
-            showAPIKeySheet = true
-            return
-        }
         isProcessing = true
         Task {
             do {
-                let result = try await GameParser.parseSimple(text: text, apiKey: key)
+                let result = try await GameParser.parseSimple(text: text, apiKey: activeAPIKey)
                 await MainActor.run {
                     simpleT1Text = String(format: "%d", result.t1)
                     simpleT2Text = String(format: "%d", result.t2)
@@ -670,17 +665,11 @@ struct MainView: View {
             guard !text.isEmpty else { return }
             processVoice(text: text)
         } else {
-            let key = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
-            if key.isEmpty {
-                showAPIKeySheet = true
-                return
-            }
             speech.start()
         }
     }
 
     private func processVoice(text: String) {
-        let key = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
         isProcessing = true
 
         Task {
@@ -689,7 +678,7 @@ struct MainView: View {
                     text:      text,
                     team1Name: vm.team1Name,
                     team2Name: vm.team2Name,
-                    apiKey:    key
+                    apiKey:    activeAPIKey
                 )
                 await MainActor.run { fillFromParsed(parsed) }
             } catch {
