@@ -41,26 +41,31 @@ jobs:
           mkdir -p ~/private_keys
           echo -n "$APPSTORE_API_KEY_P8" | base64 --decode -o ~/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8
 
-      - name: Prepare Project
+      - name: Prepare Project for Distribution
         env:
           TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
-          BUILD_NUMBER=$(date +%Y%m%d%H%M)
-          python3 << 'PYEOF'
-          import re, os
+          python3 << PYEOF
+          import os
           team = os.environ['TEAM_ID']
+          build = os.popen("date +%Y%m%d%H%M").read().strip()
           with open('BlootScore.xcodeproj/project.pbxproj', 'r') as f:
               content = f.read()
+          # Switch to manual signing
+          content = content.replace('CODE_SIGN_STYLE = Automatic;', 'CODE_SIGN_STYLE = Manual;')
           # Update build number
-          content = re.sub(r'CURRENT_PROJECT_VERSION = [^;]+', f'CURRENT_PROJECT_VERSION = {os.popen("date +%Y%m%d%H%M").read().strip()}', content)
-          # Set team ID
-          content = re.sub(r'DEVELOPMENT_TEAM = [^;]*', f'DEVELOPMENT_TEAM = {team}', content)
-          # Ensure no DEVELOPMENT_TEAM duplicates - add if not present
-          if 'DEVELOPMENT_TEAM' not in content:
-              content = content.replace('CODE_SIGN_STYLE = Automatic;', f'CODE_SIGN_STYLE = Automatic;\n\t\t\t\tDEVELOPMENT_TEAM = {team};')
+          import re
+          content = re.sub(r'CURRENT_PROJECT_VERSION = [^;]+', f'CURRENT_PROJECT_VERSION = {build}', content)
+          # Add distribution signing settings after each CODE_SIGN_STYLE = Manual
+          old = 'CODE_SIGN_STYLE = Manual;'
+          new = f'''CODE_SIGN_STYLE = Manual;
+          				CODE_SIGN_IDENTITY = "Apple Distribution";
+          				DEVELOPMENT_TEAM = {team};
+          				PROVISIONING_PROFILE_SPECIFIER = "";'''
+          content = content.replace(old, new)
           with open('BlootScore.xcodeproj/project.pbxproj', 'w') as f:
               f.write(content)
-          print(f'Team ID set to {team}')
+          print(f'Set team={team}, build={build}, manual signing with Apple Distribution')
           PYEOF
 
       - name: Build Archive
@@ -74,13 +79,15 @@ jobs:
             -scheme BlootScore \
             -configuration Release \
             -destination 'generic/platform=iOS' \
-            -archivePath $RUNNER_TEMP/BlootScore.xcarchive \
+            -archivePath "$RUNNER_TEMP/BlootScore.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            COMPILER_INDEX_STORE_ENABLE=NO | tail -30
+            COMPILER_INDEX_STORE_ENABLE=NO
 
       - name: Export & Upload to TestFlight
         env:
@@ -88,15 +95,19 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
         run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist <<'EXPEOF'
+          cat > "$RUNNER_TEMP/ExportOptions.plist" << EXPEOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>method</key>
               <string>app-store-connect</string>
+              <key>teamID</key>
+              <string>${TEAM_ID}</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>signingCertificate</key>
+              <string>Apple Distribution</string>
               <key>uploadSymbols</key>
               <true/>
               <key>destination</key>
@@ -106,11 +117,11 @@ jobs:
           EXPEOF
 
           xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/BlootScore.xcarchive \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export \
+            -archivePath "$RUNNER_TEMP/BlootScore.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
             -allowProvisioningUpdates \
-            -authenticationKeyPath ~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
