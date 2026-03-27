@@ -55,7 +55,14 @@ jobs:
           TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           cd BlootScore.xcodeproj
+          sed -i '' "s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/" project.pbxproj
           sed -i '' "s/DEVELOPMENT_TEAM = [^;]*/DEVELOPMENT_TEAM = $TEAM_ID/" project.pbxproj
+          # Add DEVELOPMENT_TEAM and CODE_SIGN_IDENTITY if not present
+          sed -i '' "/CODE_SIGN_STYLE = Manual;/a\\
+				CODE_SIGN_IDENTITY = \"Apple Distribution\";\\
+				DEVELOPMENT_TEAM = $TEAM_ID;\\
+				PROVISIONING_PROFILE_SPECIFIER = \"\";
+          " project.pbxproj
 
       - name: Build Archive
         env:
@@ -68,7 +75,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath $RUNNER_TEMP/BlootScore.xcarchive \
             DEVELOPMENT_TEAM=$TEAM_ID \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8 \
