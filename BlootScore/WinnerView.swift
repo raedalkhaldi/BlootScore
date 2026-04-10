@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WinnerView: View {
     @EnvironmentObject var vm: GameViewModel
+    @EnvironmentObject var voices: VoiceStore
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -66,6 +67,15 @@ struct WinnerView: View {
         }
         .padding()
         .environment(\.layoutDirection, .rightToLeft)
+        .onAppear {
+            // تشغيل الصوت المناسب لحالة النتيجة (حلاق/فوز نهائي)
+            let t1 = vm.team1Total, t2 = vm.team2Total
+            if t1 == 0 || t2 == 0 {
+                voices.play(.barber)
+            } else {
+                voices.play(.finalWin)
+            }
+        }
     }
 
     @ViewBuilder

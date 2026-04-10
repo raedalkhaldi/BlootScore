@@ -22,12 +22,14 @@ struct BlootApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var vm: GameViewModel
+    @EnvironmentObject var voices: VoiceStore
 
     var body: some View {
         MainView()
             .sheet(isPresented: $vm.isGameOver) {
                 WinnerView()
                     .environmentObject(vm)
+                    .environmentObject(voices)
                     .environment(\.layoutDirection, .rightToLeft)
             }
     }

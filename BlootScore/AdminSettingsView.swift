@@ -44,6 +44,13 @@ struct AdminSettingsView: View {
             }, message: {
                 Text(errorMsg ?? "")
             })
+            .onChange(of: recorder.errorMessage) { newVal in
+                if let v = newVal, !v.isEmpty {
+                    errorMsg = v
+                    recorder.errorMessage = nil
+                    activeRecordKey = nil
+                }
+            }
             .sheet(isPresented: $showPicker) {
                 DocPicker(types: [UTType.audio]) { url in
                     if let key = pickingForKey,

@@ -44,6 +44,9 @@ struct MainView: View {
     // ── تتبع آخر جولة شغّلنا لها صوت ─────────────────────────────────────
     @State private var lastPlayedRoundID:  UUID?
 
+    // ── تأكيد لعبة جديدة ────────────────────────────────────────────────
+    @State private var showNewGameConfirm = false
+
     // ── مساعدات ──────────────────────────────────────────────────────────
     private var buyerRaw: Int { Int(buyerRawText) ?? 0 }
     private var team1RawDisplay: Int { buyerIsTeam1 ? buyerRaw : max(0, gameType.rawTotal - buyerRaw) }
@@ -107,6 +110,28 @@ struct MainView: View {
                             .padding(.top, 20)
                     }
 
+                    // ── زر لعبة جديدة (يظهر فقط إذا فيه جولات مسجّلة) ──
+                    if !vm.rounds.isEmpty {
+                        Button { showNewGameConfirm = true } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.counterclockwise.circle.fill")
+                                Text("لعبة جديدة — تصفير العدّاد")
+                            }
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.orange, lineWidth: 1.5)
+                            )
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 18)
+                    }
+
                     Spacer(minLength: 40)
                 }
             }
@@ -151,6 +176,25 @@ struct MainView: View {
         .sheet(isPresented: $showEditSheet) { editRoundSheet }
         .sheet(isPresented: $showSettingsSheet) { AdminSettingsView() }
         .onChange(of: vm.rounds.count) { _ in playVoiceForLastRound() }
+        .confirmationDialog("لعبة جديدة",
+                            isPresented: $showNewGameConfirm,
+                            titleVisibility: .visible) {
+            Button("نفس الفرق — تصفير النقاط", role: .destructive) {
+                vm.restartSameTeams()
+                resetEntry(); resetSimple()
+                lastPlayedRoundID = nil
+                voices.play(.gameStart)
+            }
+            Button("تغيير الفرق", role: .destructive) {
+                vm.fullReset()
+                resetEntry(); resetSimple()
+                lastPlayedRoundID = nil
+                voices.play(.gameStart)
+            }
+            Button("إلغاء", role: .cancel) { }
+        } message: {
+            Text("هل تبي تصفّر العدّاد وتبدأ لعبة جديدة؟")
+        }
     }
 
     // MARK: ── تشغيل صوت حسب نتيجة الجولة ───────────────────────────────
