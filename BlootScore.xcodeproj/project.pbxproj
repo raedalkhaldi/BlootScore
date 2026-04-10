@@ -15,6 +15,11 @@
 		000000000000000000000017 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000013 /* GameViewModel.swift */; };
 		000000000000000000000018 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000014 /* MainView.swift */; };
 		000000000000000000000019 /* WinnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000015 /* WinnerView.swift */; };
+		000000000000000000000029 /* FirebaseREST.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000028 /* FirebaseREST.swift */; };
+		00000000000000000000002B /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002A /* VoiceRecorder.swift */; };
+		00000000000000000000002D /* VoiceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002C /* VoiceStore.swift */; };
+		00000000000000000000002F /* AdminSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002E /* AdminSettingsView.swift */; };
+		000000000000000000000031 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* GoogleService-Info.plist */; };
 		000000000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000010 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +32,11 @@
 		000000000000000000000013 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		000000000000000000000014 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		000000000000000000000015 /* WinnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinnerView.swift; sourceTree = "<group>"; };
+		000000000000000000000028 /* FirebaseREST.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseREST.swift; sourceTree = "<group>"; };
+		00000000000000000000002A /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
+		00000000000000000000002C /* VoiceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceStore.swift; sourceTree = "<group>"; };
+		00000000000000000000002E /* AdminSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminSettingsView.swift; sourceTree = "<group>"; };
+		000000000000000000000030 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		000000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		000000000000000000000006 /* BlootScore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlootScore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -69,6 +79,11 @@
 				000000000000000000000023 /* GameParser.swift */,
 				000000000000000000000025 /* APIKeyView.swift */,
 				000000000000000000000027 /* LocalVoiceParser.swift */,
+				000000000000000000000028 /* FirebaseREST.swift */,
+				00000000000000000000002A /* VoiceRecorder.swift */,
+				00000000000000000000002C /* VoiceStore.swift */,
+				00000000000000000000002E /* AdminSettingsView.swift */,
+				000000000000000000000030 /* GoogleService-Info.plist */,
 				000000000000000000000010 /* Assets.xcassets */,
 			);
 			path = BlootScore;
@@ -129,6 +144,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				000000000000000000000011 /* Assets.xcassets in Resources */,
+				000000000000000000000031 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +163,10 @@
 				000000000000000000000022 /* GameParser.swift in Sources */,
 				000000000000000000000024 /* APIKeyView.swift in Sources */,
 				000000000000000000000026 /* LocalVoiceParser.swift in Sources */,
+				000000000000000000000029 /* FirebaseREST.swift in Sources */,
+				00000000000000000000002B /* VoiceRecorder.swift in Sources */,
+				00000000000000000000002D /* VoiceStore.swift in Sources */,
+				00000000000000000000002F /* AdminSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

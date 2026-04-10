@@ -2,9 +2,11 @@ import SwiftUI
 
 struct MainView: View {
     @EnvironmentObject var vm: GameViewModel
+    @EnvironmentObject var voices: VoiceStore
 
     // ── وضع العرض ──────────────────────────────────────────────────────────
     @State private var isSimpleMode = true
+    @State private var showSettingsSheet = false
 
     // ── حالة الإدخال التفصيلي ──────────────────────────────────────────────
     @State private var gameType     : GameType = .hokm
@@ -38,6 +40,9 @@ struct MainView: View {
     @State private var editT1Text:         String = ""
     @State private var editT2Text:         String = ""
     @State private var showEditSheet       = false
+
+    // ── تتبع آخر جولة شغّلنا لها صوت ─────────────────────────────────────
+    @State private var lastPlayedRoundID:  UUID?
 
     // ── مساعدات ──────────────────────────────────────────────────────────
     private var buyerRaw: Int { Int(buyerRawText) ?? 0 }
@@ -125,6 +130,9 @@ struct MainView: View {
                     modeSwitcher
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button { showSettingsSheet = true } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
                     if !isSimpleMode {
                         Button { showAPIKeySheet = true } label: {
                             Image(systemName: "brain")
@@ -141,6 +149,27 @@ struct MainView: View {
         }
         .sheet(isPresented: $showAPIKeySheet) { APIKeyView() }
         .sheet(isPresented: $showEditSheet) { editRoundSheet }
+        .sheet(isPresented: $showSettingsSheet) { AdminSettingsView() }
+        .onChange(of: vm.rounds.count) { _ in playVoiceForLastRound() }
+    }
+
+    // MARK: ── تشغيل صوت حسب نتيجة الجولة ───────────────────────────────
+    private func playVoiceForLastRound() {
+        guard let last = vm.rounds.last else {
+            lastPlayedRoundID = nil
+            return
+        }
+        // لا نعيد تشغيل نفس الجولة (حماية من onChange في الحذف/التعديل)
+        guard last.id != lastPlayedRoundID else { return }
+        lastPlayedRoundID = last.id
+        if let state = VoiceStore.detect(
+            round: last,
+            team1Total: vm.team1Total,
+            team2Total: vm.team2Total,
+            winningScore: vm.winningScore
+        ) {
+            voices.play(state)
+        }
     }
 
     // MARK: ── تبديل الوضع ───────────────────────────────────────────────
