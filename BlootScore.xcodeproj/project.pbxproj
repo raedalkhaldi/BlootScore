@@ -20,6 +20,7 @@
 		00000000000000000000002D /* VoiceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002C /* VoiceStore.swift */; };
 		00000000000000000000002F /* AdminSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002E /* AdminSettingsView.swift */; };
 		000000000000000000000031 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* GoogleService-Info.plist */; };
+		000000000000000000000033 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* PrivacyInfo.xcprivacy */; };
 		000000000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000010 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +38,7 @@
 		00000000000000000000002C /* VoiceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceStore.swift; sourceTree = "<group>"; };
 		00000000000000000000002E /* AdminSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminSettingsView.swift; sourceTree = "<group>"; };
 		000000000000000000000030 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		000000000000000000000032 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		000000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		000000000000000000000006 /* BlootScore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlootScore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -84,6 +86,7 @@
 				00000000000000000000002C /* VoiceStore.swift */,
 				00000000000000000000002E /* AdminSettingsView.swift */,
 				000000000000000000000030 /* GoogleService-Info.plist */,
+				000000000000000000000032 /* PrivacyInfo.xcprivacy */,
 				000000000000000000000010 /* Assets.xcassets */,
 			);
 			path = BlootScore;
@@ -145,6 +148,7 @@
 			files = (
 				000000000000000000000011 /* Assets.xcassets in Resources */,
 				000000000000000000000031 /* GoogleService-Info.plist in Resources */,
+				000000000000000000000033 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,6 +1,10 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import UIKit
 
+// شاشة إعدادات الأصوات — متاحة لكل المستخدمين.
+// - كل مستخدم يقدر يسجّل نسخته المحلية ويستعيد الافتراضي متى شاء.
+// - الأدمن يقدر يفعّل "وضع الأدمن" ويرفع الصوت كافتراضي لكل المستخدمين.
 struct AdminSettingsView: View {
     @StateObject private var store = VoiceStore.shared
     @StateObject private var fb = FirebaseREST.shared
@@ -11,24 +15,21 @@ struct AdminSettingsView: View {
     @State private var showPicker = false
     @State private var busyKey: String? = nil
     @State private var errorMsg: String? = nil
+    @State private var adminMode = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationView {
             Group {
                 if !fb.isReady {
-                    loading("جارٍ الاتصال بالخدمة...")
-                } else if store.isLoading && store.clips.isEmpty {
+                    loading("جارٍ الاتصال...")
+                } else if store.isLoading && store.defaults.isEmpty {
                     loading("جارٍ تحميل الإعدادات...")
-                } else if store.adminNotClaimed {
-                    claimAdminView
-                } else if !store.isAdmin {
-                    notAdminView
                 } else {
-                    adminList
+                    settingsList
                 }
             }
-            .navigationTitle("إدارة الأصوات")
+            .navigationTitle("إعدادات الأصوات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -54,8 +55,8 @@ struct AdminSettingsView: View {
             .sheet(isPresented: $showPicker) {
                 DocPicker(types: [UTType.audio]) { url in
                     if let key = pickingForKey,
-                       let state = VoiceState(rawValue: keyToRaw(key)) {
-                        Task { await upload(state: state, url: url) }
+                       let state = VoiceState.allCases.first(where: { $0.key == key }) {
+                        Task { await saveUploaded(state: state, url: url) }
                     }
                     pickingForKey = nil
                 }
@@ -64,98 +65,77 @@ struct AdminSettingsView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
-    // MARK: Subviews
+    // MARK: Views
     private func loading(_ msg: String) -> some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text(msg).foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack(spacing: 12) { ProgressView(); Text(msg).foregroundColor(.secondary) }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var claimAdminView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "person.badge.key.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.orange)
-            Text("لم يتم تعيين أدمن بعد")
-                .font(.title2).bold()
-            Text("اضغط على الزر للمطالبة بحقوق الأدمن لهذا الجهاز.\nلن يستطيع أحد آخر التعديل بعدها.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            Button {
-                Task {
-                    do { try await store.claimAdmin() }
-                    catch { errorMsg = "فشل تسجيل الأدمن: \(error.localizedDescription)" }
-                }
-            } label: {
-                Text("تعيين هذا الجهاز كأدمن")
-                    .bold()
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.orange)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var notAdminView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "lock.fill").font(.system(size: 60)).foregroundColor(.secondary)
-            Text("هذه الشاشة للأدمن فقط").font(.title2).bold()
-            Text("UID الخاص بك:\n\(fb.uid ?? "—")")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var adminList: some View {
+    private var settingsList: some View {
         List {
-            ForEach(VoiceState.allCases) { state in
-                row(for: state)
+            if store.isAdmin {
+                Section(header: Text("وضع الأدمن")) {
+                    Toggle(isOn: $adminMode) {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("تعديل الأصوات الافتراضية")
+                                .font(.headline)
+                            Text(adminMode
+                                 ? "أي تسجيل جديد يُرفع كافتراضي لكل المستخدمين"
+                                 : "التسجيل يُحفظ محلياً على هذا الجهاز فقط")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            } else if store.adminNotClaimed {
+                Section {
+                    Button {
+                        Task {
+                            do { try await store.claimAdmin() }
+                            catch { errorMsg = "فشل تعيين الأدمن: \(error.localizedDescription)" }
+                        }
+                    } label: {
+                        Label("تعيين هذا الجهاز كأدمن (أول مرة فقط)",
+                              systemImage: "person.badge.key")
+                    }
+                }
+            }
+
+            Section(header: Text("الحالات"),
+                    footer: Text("التسجيل الجديد يستبدل الصوت الافتراضي على جهازك فقط. استخدم \"استعادة الافتراضي\" للرجوع للصوت الأصلي.")) {
+                ForEach(VoiceState.allCases) { state in
+                    row(for: state)
+                }
             }
         }
         .listStyle(.insetGrouped)
     }
 
     private func row(for state: VoiceState) -> some View {
-        let clip = store.clips[state.key] ?? VoiceClip(enabled: true, hasAudio: false, updatedAt: nil)
+        let source = store.source(state)
+        let enabled = store.effectiveEnabled(state)
         let isRecordingThis = recorder.isRecording && activeRecordKey == state.key
         let isBusy = busyKey == state.key
+        let hasLocal = store.hasLocalOverride(state)
 
         return VStack(alignment: .trailing, spacing: 8) {
             HStack {
                 Toggle(isOn: Binding(
-                    get: { clip.enabled },
+                    get: { enabled },
                     set: { newVal in Task { await toggle(state, newVal) } }
                 )) {
-                    VStack(alignment: .trailing, spacing: 2) {
+                    VStack(alignment: .trailing, spacing: 3) {
                         Text(state.title).font(.headline)
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(clip.hasAudio ? Color.green : Color.gray.opacity(0.4))
-                                .frame(width: 8, height: 8)
-                            Text(clip.hasAudio ? "صوت مرفوع" : "لا يوجد صوت")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        sourceBadge(source)
                     }
                 }
             }
 
             HStack(spacing: 8) {
-                // Record
                 Button {
                     if isRecordingThis {
                         if let url = recorder.stop() {
-                            Task { await upload(state: state, url: url) }
+                            Task { await saveRecorded(state: state, url: url) }
                         }
                         activeRecordKey = nil
                     } else {
@@ -171,7 +151,6 @@ struct AdminSettingsView: View {
                 .tint(isRecordingThis ? .red : .blue)
                 .disabled(isBusy || (recorder.isRecording && !isRecordingThis))
 
-                // Upload from files
                 Button {
                     pickingForKey = state.key
                     showPicker = true
@@ -182,21 +161,23 @@ struct AdminSettingsView: View {
                 .buttonStyle(.bordered)
                 .disabled(isBusy || recorder.isRecording)
 
-                // Play
                 Button {
                     store.play(state)
                 } label: {
                     Image(systemName: "play.circle.fill").font(.title3)
                 }
-                .disabled(!clip.hasAudio || isBusy)
+                .disabled(source == .none || isBusy)
 
-                // Delete
-                Button(role: .destructive) {
-                    Task { await deleteClip(state) }
-                } label: {
-                    Image(systemName: "trash").font(.subheadline)
+                if hasLocal {
+                    Button {
+                        store.restoreDefault(state)
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.orange)
+                    }
+                    .disabled(isBusy)
                 }
-                .disabled(!clip.hasAudio || isBusy)
 
                 if isBusy { ProgressView().scaleEffect(0.8) }
             }
@@ -204,36 +185,65 @@ struct AdminSettingsView: View {
         .padding(.vertical, 6)
     }
 
+    @ViewBuilder
+    private func sourceBadge(_ source: VoiceSource) -> some View {
+        HStack(spacing: 4) {
+            switch source {
+            case .custom:
+                Circle().fill(Color.blue).frame(width: 8, height: 8)
+                Text("مخصّص (محلي)").font(.caption).foregroundColor(.blue)
+            case .defaultAdmin:
+                Circle().fill(Color.green).frame(width: 8, height: 8)
+                Text("الافتراضي").font(.caption).foregroundColor(.secondary)
+            case .none:
+                Circle().fill(Color.gray.opacity(0.4)).frame(width: 8, height: 8)
+                Text("لا يوجد صوت").font(.caption).foregroundColor(.secondary)
+            }
+        }
+    }
+
     // MARK: Actions
     private func toggle(_ state: VoiceState, _ on: Bool) async {
-        busyKey = state.key
-        defer { busyKey = nil }
-        do { try await store.setEnabled(state, on) }
-        catch { errorMsg = error.localizedDescription }
+        if adminMode && store.isAdmin {
+            busyKey = state.key
+            defer { busyKey = nil }
+            do { try await store.setDefaultEnabled(state, on) }
+            catch { errorMsg = error.localizedDescription }
+        } else {
+            store.setLocalEnabled(state, on)
+        }
     }
 
-    private func upload(state: VoiceState, url: URL) async {
+    private func saveRecorded(state: VoiceState, url: URL) async {
         busyKey = state.key
         defer { busyKey = nil }
-        do { try await store.uploadVoice(state, fileURL: url) }
-        catch { errorMsg = error.localizedDescription }
+        do {
+            if adminMode && store.isAdmin {
+                try await store.uploadAsDefault(state, fileURL: url)
+                try store.saveLocalOverride(state, from: url) // الأدمن يشوف نسخته محلياً بعد
+            } else {
+                try store.saveLocalOverride(state, from: url)
+            }
+        } catch {
+            errorMsg = error.localizedDescription
+        }
     }
 
-    private func deleteClip(_ state: VoiceState) async {
+    private func saveUploaded(state: VoiceState, url: URL) async {
         busyKey = state.key
         defer { busyKey = nil }
-        do { try await store.deleteVoice(state) }
-        catch { errorMsg = error.localizedDescription }
-    }
-
-    private func keyToRaw(_ key: String) -> String {
-        // Our enum raw values differ from keys; look up by key
-        VoiceState.allCases.first(where: { $0.key == key })?.rawValue ?? key
+        do {
+            if adminMode && store.isAdmin {
+                try await store.uploadAsDefault(state, fileURL: url)
+            }
+            try store.saveLocalOverride(state, from: url)
+        } catch {
+            errorMsg = error.localizedDescription
+        }
     }
 }
 
 // MARK: - Document Picker wrapper
-import UIKit
 struct DocPicker: UIViewControllerRepresentable {
     let types: [UTType]
     let onPick: (URL) -> Void
