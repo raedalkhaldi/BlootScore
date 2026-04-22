@@ -6,23 +6,25 @@ struct APIKeyView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
+            VStack(spacing: Theme.Space.xl) {
+                VStack(spacing: Theme.Space.sm) {
                     Image(systemName: "brain.head.profile")
                         .font(.system(size: 48))
-                        .foregroundColor(.blue)
+                        .foregroundColor(Theme.Color.accent)
                     Text("مفتاح الذكاء الاصطناعي")
-                        .font(.title2.bold())
+                        .font(Theme.Font.title)
+                        .foregroundColor(Theme.Color.ink)
                     Text("أدخل مفتاح Anthropic API لتفعيل التسجيل بالصوت")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(Theme.Font.body)
+                        .foregroundColor(Theme.Color.muted)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 20)
+                .padding(.top, Theme.Space.xl)
 
-                VStack(alignment: .trailing, spacing: 6) {
+                VStack(alignment: .trailing, spacing: Theme.Space.xs + 2) {
                     Text("API Key")
-                        .font(.caption).foregroundColor(.secondary)
+                        .font(Theme.Font.caption)
+                        .foregroundColor(Theme.Color.muted)
                     SecureField("sk-ant-...", text: $key)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
@@ -30,35 +32,40 @@ struct APIKeyView: View {
                         .multilineTextAlignment(.leading)
                         .environment(\.layoutDirection, .leftToRight)
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, Theme.Space.lg)
 
                 Button {
+                    Theme.Haptic.success()
                     UserDefaults.standard.set(key, forKey: "anthropic_api_key")
                     dismiss()
                 } label: {
                     Text("حفظ")
-                        .font(.headline)
+                        .font(Theme.Font.title)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(key.isEmpty ? Color(.systemGray5) : Color.blue)
-                        .foregroundColor(key.isEmpty ? .secondary : .white)
-                        .cornerRadius(12)
+                        .padding(.vertical, Theme.Space.md + 2)
+                        .background(key.isEmpty ? Theme.Color.canvas : Theme.Color.accent)
+                        .foregroundColor(key.isEmpty ? Theme.Color.muted : Theme.Color.onAccent)
+                        .cornerRadius(Theme.Radius.md)
+                        .themeHairline(key.isEmpty ? Theme.Color.border : Color.clear,
+                                       cornerRadius: Theme.Radius.md)
                 }
                 .disabled(key.isEmpty)
-                .padding(.horizontal)
+                .padding(.horizontal, Theme.Space.lg)
 
                 Link("احصل على مفتاح مجاني من Anthropic",
                      destination: URL(string: "https://console.anthropic.com")!)
-                    .font(.footnote)
-                    .foregroundColor(.blue)
+                    .font(Theme.Font.caption)
+                    .foregroundColor(Theme.Color.accent)
 
                 Spacer()
             }
+            .background(Theme.Color.canvas.ignoresSafeArea())
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("إلغاء") { dismiss() }
+                        .foregroundColor(Theme.Color.ink)
                 }
             }
         }

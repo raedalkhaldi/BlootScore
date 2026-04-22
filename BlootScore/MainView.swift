@@ -71,9 +71,6 @@ struct MainView: View {
                                  buyerDec: bDec, otherDec: oDec)
     }
 
-    private let c1 = Color.blue
-    private let c2 = Color.red
-
     // ──────────────────────────────────────────────────────────────────────
     var body: some View {
         NavigationView {
@@ -81,73 +78,81 @@ struct MainView: View {
                 VStack(spacing: 0) {
 
                     // ── بطاقات النقاط — نحن يمين، هم يسار ──────────
-                    HStack(spacing: 12) {
-                        ScoreCard(name: $vm.team1Name, score: vm.team1Total, color: c1)
-                        ScoreCard(name: $vm.team2Name, score: vm.team2Total, color: c2)
+                    HStack(spacing: Theme.Space.md) {
+                        ScoreCard(name: $vm.team1Name, score: vm.team1Total, color: Theme.Color.team1)
+                        ScoreCard(name: $vm.team2Name, score: vm.team2Total, color: Theme.Color.team2)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
+                    .padding(.horizontal, Theme.Space.lg)
+                    .padding(.top, Theme.Space.lg)
 
                     ProgressBar(t1: vm.team1Total, t2: vm.team2Total, goal: vm.winningScore)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
+                        .padding(.horizontal, Theme.Space.lg)
+                        .padding(.top, Theme.Space.md)
 
                     // ── إدخال الجولة ──────────────────────────────────
                     if isSimpleMode {
                         simpleEntrySection
-                            .padding(.horizontal)
-                            .padding(.top, 12)
+                            .padding(.horizontal, Theme.Space.lg)
+                            .padding(.top, Theme.Space.md)
                     } else {
                         roundEntrySection
-                            .padding(.horizontal)
-                            .padding(.top, 12)
+                            .padding(.horizontal, Theme.Space.lg)
+                            .padding(.top, Theme.Space.md)
                     }
 
                     // ── سجل الجولات ───────────────────────────────────
                     if !vm.rounds.isEmpty {
                         RoundHistory(onEdit: { round in startEditRound(round) })
-                            .padding(.horizontal)
-                            .padding(.top, 20)
+                            .padding(.horizontal, Theme.Space.lg)
+                            .padding(.top, Theme.Space.xl)
                     }
 
                     // ── زر لعبة جديدة (يظهر فقط إذا فيه جولات مسجّلة) ──
                     if !vm.rounds.isEmpty {
-                        Button { showNewGameConfirm = true } label: {
-                            HStack(spacing: 8) {
+                        Button {
+                            Theme.Haptic.warning()
+                            showNewGameConfirm = true
+                        } label: {
+                            HStack(spacing: Theme.Space.sm) {
                                 Image(systemName: "arrow.counterclockwise.circle.fill")
                                 Text("لعبة جديدة — تصفير العدّاد")
                             }
-                            .font(.headline)
+                            .font(Theme.Font.title)
                             .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.orange.opacity(0.15))
-                            .foregroundColor(.orange)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.orange, lineWidth: 1.5)
-                            )
+                            .padding(.vertical, Theme.Space.md + 2)
+                            .foregroundColor(Theme.Color.warning)
+                            .background(Theme.Color.surface)
+                            .cornerRadius(Theme.Radius.md)
+                            .themeHairline(Theme.Color.warning.opacity(0.4), cornerRadius: Theme.Radius.md)
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 18)
+                        .padding(.horizontal, Theme.Space.lg)
+                        .padding(.top, Theme.Space.lg)
                     }
 
-                    Spacer(minLength: 40)
+                    Spacer(minLength: Theme.Space.xxl + Theme.Space.sm)
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Theme.Color.canvas.ignoresSafeArea())
             .navigationTitle("البلوت")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 8) {
-                        Button { vm.undoLastRound() } label: {
+                    HStack(spacing: Theme.Space.sm) {
+                        Button {
+                            Theme.Haptic.light()
+                            vm.undoLastRound()
+                        } label: {
                             Image(systemName: "arrow.uturn.backward")
+                                .foregroundColor(Theme.Color.ink)
                         }
                         .disabled(vm.rounds.isEmpty)
 
-                        Button { vm.fullReset(); resetEntry(); resetSimple() } label: {
+                        Button {
+                            Theme.Haptic.medium()
+                            vm.fullReset(); resetEntry(); resetSimple()
+                        } label: {
                             Image(systemName: "arrow.counterclockwise")
+                                .foregroundColor(Theme.Color.ink)
                         }
                     }
                 }
@@ -157,10 +162,12 @@ struct MainView: View {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button { showSettingsSheet = true } label: {
                         Image(systemName: "gearshape.fill")
+                            .foregroundColor(Theme.Color.ink)
                     }
                     if !isSimpleMode {
                         Button { showAPIKeySheet = true } label: {
                             Image(systemName: "brain")
+                                .foregroundColor(Theme.Color.ink)
                         }
                     }
                 }
@@ -219,22 +226,32 @@ struct MainView: View {
     // MARK: ── تبديل الوضع ───────────────────────────────────────────────
     @ViewBuilder
     private var modeSwitcher: some View {
-        HStack(spacing: 4) {
-            smallModeBtn(label: "مبسط", active: isSimpleMode) { isSimpleMode = true }
-            smallModeBtn(label: "تفصيلي", active: !isSimpleMode) { isSimpleMode = false }
+        HStack(spacing: 2) {
+            smallModeBtn(label: "مبسط",   active: isSimpleMode)  {
+                Theme.Haptic.light()
+                isSimpleMode = true
+            }
+            smallModeBtn(label: "تفصيلي", active: !isSimpleMode) {
+                Theme.Haptic.light()
+                isSimpleMode = false
+            }
         }
+        .padding(2)
+        .background(Theme.Color.canvas)
+        .cornerRadius(Theme.Radius.sm)
+        .themeHairline(cornerRadius: Theme.Radius.sm)
     }
 
     @ViewBuilder
     private func smallModeBtn(label: String, active: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.caption2.bold())
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(active ? Color.blue : Color(.systemGray5))
-                .foregroundColor(active ? .white : .secondary)
-                .cornerRadius(6)
+                .font(Theme.Font.label)
+                .padding(.horizontal, Theme.Space.md)
+                .padding(.vertical, Theme.Space.xs + 2)
+                .background(active ? Theme.Color.ink : Color.clear)
+                .foregroundColor(active ? Theme.Color.surface : Theme.Color.muted)
+                .cornerRadius(Theme.Radius.xs + 2)
         }
         .buttonStyle(.plain)
     }
@@ -244,36 +261,34 @@ struct MainView: View {
     // MARK: ══════════════════════════════════════════════════════════════════
     @ViewBuilder
     private var simpleEntrySection: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: Theme.Space.lg) {
 
             // حقول النقاط — نحن يمين، هم يسار
-            HStack(spacing: 10) {
-                simpleScoreField(label: vm.team1Name, text: $simpleT1Text, color: c1)
-                simpleScoreField(label: vm.team2Name, text: $simpleT2Text, color: c2)
+            HStack(spacing: Theme.Space.md) {
+                simpleScoreField(label: vm.team1Name, text: $simpleT1Text, color: Theme.Color.team1)
+                simpleScoreField(label: vm.team2Name, text: $simpleT2Text, color: Theme.Color.team2)
             }
 
-            // زر الميكروفون — كبير ودائري وأحمر
+            // زر الميكروفون — كبير، دائري. عَنبَر للإدلة، أحمر للتسجيل.
             Button { handleSimpleMic() } label: {
                 ZStack {
                     Circle()
-                        .fill(isProcessing ? Color.orange : (speech.isListening ? Color.red.opacity(0.2) : Color.red))
-                        .frame(width: 80, height: 80)
-                        .shadow(color: speech.isListening ? .red.opacity(0.4) : .red.opacity(0.25), radius: 10, y: 4)
+                        .fill(micFillColor)
+                        .frame(width: 84, height: 84)
+                        .shadow(color: micFillColor.opacity(0.35), radius: 12, y: 4)
+
                     if isProcessing {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(CircularProgressViewStyle(tint: Theme.Color.onAccent))
                             .scaleEffect(1.5)
                     } else if speech.isListening {
-                        Circle()
-                            .stroke(Color.red, lineWidth: 3)
-                            .frame(width: 80, height: 80)
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.red)
+                        RoundedRectangle(cornerRadius: Theme.Radius.xs)
+                            .fill(Theme.Color.onAccent)
                             .frame(width: 26, height: 26)
                     } else {
                         Image(systemName: "mic.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(.white)
+                            .foregroundColor(Theme.Color.onAccent)
                     }
                 }
             }
@@ -282,66 +297,91 @@ struct MainView: View {
 
             // نص التسجيل الصوتي المباشر أو آخر نص مسموع
             if speech.isListening && !speech.transcript.isEmpty {
-                Text(speech.transcript)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                transcriptBubble(speech.transcript, icon: nil)
             } else if !lastTranscript.isEmpty && simpleCanSave {
-                HStack(spacing: 4) {
-                    Image(systemName: "ear.fill").font(.caption2).foregroundColor(.secondary)
-                    Text("سمعت: \(lastTranscript)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding(8)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                transcriptBubble("سمعت: \(lastTranscript)", icon: "ear.fill")
             }
 
             // خطأ الصوت
             if let err = voiceError {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-                    Text(err).font(.caption).foregroundColor(.orange)
+                HStack(spacing: Theme.Space.xs + 2) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(Theme.Color.warning)
+                    Text(err)
+                        .font(Theme.Font.caption)
+                        .foregroundColor(Theme.Color.warning)
                 }
                 .frame(maxWidth: .infinity)
             }
 
             // زر التسجيل اليدوي
-            Button { saveSimpleRound() } label: {
-                Text("تسجيل")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(simpleCanSave ? Color.blue : Color(.systemGray5))
-                    .foregroundColor(simpleCanSave ? .white : Color(.systemGray))
-                    .cornerRadius(12)
+            primarySaveButton(enabled: simpleCanSave) {
+                Theme.Haptic.success()
+                saveSimpleRound()
             }
-            .disabled(!simpleCanSave)
         }
+    }
+
+    private var micFillColor: Color {
+        if isProcessing      { return Theme.Color.warning    }
+        if speech.isListening { return Theme.Color.micActive }
+        return Theme.Color.accent
+    }
+
+    @ViewBuilder
+    private func transcriptBubble(_ text: String, icon: String?) -> some View {
+        HStack(spacing: Theme.Space.xs + 2) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(Theme.Font.micro)
+                    .foregroundColor(Theme.Color.muted)
+            }
+            Text(text)
+                .font(Theme.Font.caption)
+                .foregroundColor(Theme.Color.muted)
+        }
+        .padding(Theme.Space.sm)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .background(Theme.Color.canvas)
+        .cornerRadius(Theme.Radius.sm)
+        .themeHairline(cornerRadius: Theme.Radius.sm)
+    }
+
+    @ViewBuilder
+    private func primarySaveButton(enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text("تسجيل")
+                .font(Theme.Font.title)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Theme.Space.md + 2)
+                .background(enabled ? Theme.Color.accent : Theme.Color.canvas)
+                .foregroundColor(enabled ? Theme.Color.onAccent : Theme.Color.muted)
+                .cornerRadius(Theme.Radius.md)
+                .themeHairline(enabled ? Color.clear : Theme.Color.border,
+                               cornerRadius: Theme.Radius.md)
+        }
+        .disabled(!enabled)
     }
 
     @ViewBuilder
     private func simpleScoreField(label: String, text: Binding<String>, color: Color) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Space.xs) {
             Text(label)
-                .font(.caption).foregroundColor(color)
+                .font(Theme.Font.caption)
+                .foregroundColor(color)
             TextField("0", text: text)
                 .keyboardType(.numberPad)
                 .textFieldStyle(.plain)
-                .font(.system(size: 38, weight: .bold, design: .rounded))
+                .font(Theme.Font.displayLG)
                 .foregroundColor(color)
                 .multilineTextAlignment(.center)
                 .frame(height: 52)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(.systemBackground))
-        .cornerRadius(10)
+        .padding(.vertical, Theme.Space.sm)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(cornerRadius: Theme.Radius.md)
     }
 
     // MARK: ── حفظ الوضع المبسط ──────────────────────────────────────────
@@ -366,6 +406,7 @@ struct MainView: View {
     // MARK: ── ميكروفون الوضع المبسط ──────────────────────────────────────
     private func handleSimpleMic() {
         voiceError = nil
+        Theme.Haptic.light()
 
         if speech.isListening {
             let text = speech.stop()
@@ -392,13 +433,13 @@ struct MainView: View {
                     simpleT2Text = String(format: "%d", result.t2)
                     isProcessing = false
                 }
-                } catch {
-                    await MainActor.run {
-                        voiceError = error.localizedDescription
-                        isProcessing = false
-                    }
+            } catch {
+                await MainActor.run {
+                    voiceError = error.localizedDescription
+                    isProcessing = false
                 }
             }
+        }
     }
 
     private func fillSimpleFromParsed(_ p: SimpleRoundResult) {
@@ -416,14 +457,15 @@ struct MainView: View {
     // MARK: ══════════════════════════════════════════════════════════════════
     @ViewBuilder
     private var roundEntrySection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: Theme.Space.md) {
 
             // نوع اللعبة + الفريق المشتري
-            HStack(spacing: 10) {
+            HStack(spacing: Theme.Space.md) {
                 toggleCard(title: "نوع اللعبة") {
-                    HStack(spacing: 6) {
+                    HStack(spacing: Theme.Space.xs + 2) {
                         ForEach(GameType.allCases, id: \.self) { gt in
                             toggleBtn(label: gt.rawValue, active: gameType == gt) {
+                                Theme.Haptic.light()
                                 gameType = gt
                                 team1Dec.reset(); team2Dec.reset()
                             }
@@ -431,61 +473,71 @@ struct MainView: View {
                     }
                 }
                 toggleCard(title: "المشتري") {
-                    HStack(spacing: 6) {
-                        toggleBtn(label: vm.team1Name, active: buyerIsTeam1)  { buyerIsTeam1 = true  }
-                        toggleBtn(label: vm.team2Name, active: !buyerIsTeam1) { buyerIsTeam1 = false }
+                    HStack(spacing: Theme.Space.xs + 2) {
+                        toggleBtn(label: vm.team1Name, active: buyerIsTeam1,  activeColor: Theme.Color.team1)  {
+                            Theme.Haptic.light()
+                            buyerIsTeam1 = true
+                        }
+                        toggleBtn(label: vm.team2Name, active: !buyerIsTeam1, activeColor: Theme.Color.team2) {
+                            Theme.Haptic.light()
+                            buyerIsTeam1 = false
+                        }
                     }
                 }
             }
 
             // كبوت / دبل + حقل الأوراق
-            VStack(spacing: 10) {
-                HStack(spacing: 8) {
-                    toggleBtn(label: "كبوت", active: isKaboot, activeColor: .orange) {
+            VStack(spacing: Theme.Space.md) {
+                HStack(spacing: Theme.Space.sm) {
+                    toggleBtn(label: "كبوت", active: isKaboot, activeColor: Theme.Color.warning) {
+                        Theme.Haptic.light()
                         isKaboot.toggle()
                         if isKaboot { isDobble = false; buyerRawText = "" }
                     }
-                    toggleBtn(label: "دبل x2", active: isDobble, activeColor: .purple) {
+                    toggleBtn(label: "دبل x2", active: isDobble, activeColor: Theme.Color.dobble) {
+                        Theme.Haptic.light()
                         isDobble.toggle()
                         if isDobble { isKaboot = false }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, Theme.Space.md)
 
                 if !isKaboot {
                     // نحن دائما يمين، هم دائما يسار
-                    HStack(spacing: 10) {
+                    HStack(spacing: Theme.Space.md) {
                         rawInputCard(
                             label: "\(vm.team1Name) — أوراق",
                             text: buyerIsTeam1 ? $buyerRawText
                                               : .constant(buyerRawValid ? String(format: "%d", team1RawDisplay) : "—"),
-                            color: buyerIsTeam1 ? c1 : c1.opacity(0.5),
+                            color: buyerIsTeam1 ? Theme.Color.team1 : Theme.Color.team1.opacity(0.5),
                             isEditable: buyerIsTeam1
                         )
                         rawInputCard(
                             label: "\(vm.team2Name) — أوراق",
                             text: buyerIsTeam1 ? .constant(buyerRawValid ? String(format: "%d", team2RawDisplay) : "—")
                                               : $buyerRawText,
-                            color: buyerIsTeam1 ? c2.opacity(0.5) : c2,
+                            color: buyerIsTeam1 ? Theme.Color.team2.opacity(0.5) : Theme.Color.team2,
                             isEditable: !buyerIsTeam1
                         )
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, Theme.Space.md)
 
                     if let raw = Int(buyerRawText), raw > gameType.rawTotal {
                         Text("الحد الاقصى في \(gameType.rawValue): \(String(format: "%d", gameType.rawTotal))")
-                            .font(.caption).foregroundColor(.orange)
-                            .padding(.horizontal)
+                            .font(Theme.Font.caption)
+                            .foregroundColor(Theme.Color.warning)
+                            .padding(.horizontal, Theme.Space.md)
                     }
                 }
             }
-            .padding(.vertical, 10)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
+            .padding(.vertical, Theme.Space.md)
+            .background(Theme.Color.surface)
+            .cornerRadius(Theme.Radius.md)
+            .themeHairline(cornerRadius: Theme.Radius.md)
 
             // مشاريع
-            declarationsCard(title: "مشاريع \(vm.team1Name)", dec: $team1Dec, color: c1)
-            declarationsCard(title: "مشاريع \(vm.team2Name)", dec: $team2Dec, color: c2)
+            declarationsCard(title: "مشاريع \(vm.team1Name)", dec: $team1Dec, color: Theme.Color.team1)
+            declarationsCard(title: "مشاريع \(vm.team2Name)", dec: $team2Dec, color: Theme.Color.team2)
 
             // نتيجة الجولة (live)
             if let r = liveResult {
@@ -494,52 +546,45 @@ struct MainView: View {
 
             // خطأ الصوت
             if let err = voiceError {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-                    Text(err).font(.caption).foregroundColor(.orange)
+                HStack(spacing: Theme.Space.xs + 2) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(Theme.Color.warning)
+                    Text(err)
+                        .font(Theme.Font.caption)
+                        .foregroundColor(Theme.Color.warning)
                 }
                 .frame(maxWidth: .infinity)
             }
 
             // أزرار التسجيل + الميكروفون
-            HStack(spacing: 10) {
+            HStack(spacing: Theme.Space.md) {
                 Button { handleMicButton() } label: {
                     ZStack {
                         Circle()
-                            .fill(speech.isListening ? Color.red : Color(.systemGray5))
+                            .fill(speech.isListening ? Theme.Color.micActive : Theme.Color.canvas)
                             .frame(width: 52, height: 52)
+                            .themeHairline(speech.isListening ? Color.clear : Theme.Color.border,
+                                           cornerRadius: Theme.Radius.pill)
                         if isProcessing {
-                            ProgressView().tint(.white)
+                            ProgressView().tint(Theme.Color.onAccent)
                         } else {
                             Image(systemName: speech.isListening ? "stop.fill" : "mic.fill")
                                 .font(.title3)
-                                .foregroundColor(speech.isListening ? .white : .secondary)
+                                .foregroundColor(speech.isListening ? Theme.Color.onAccent : Theme.Color.muted)
                         }
                     }
                 }
                 .disabled(isProcessing)
 
-                Button { saveRound() } label: {
-                    Text("تسجيل")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(canSave ? Color.blue : Color(.systemGray5))
-                        .foregroundColor(canSave ? .white : Color(.systemGray))
-                        .cornerRadius(12)
+                primarySaveButton(enabled: canSave) {
+                    Theme.Haptic.success()
+                    saveRound()
                 }
-                .disabled(!canSave)
             }
 
             // نص التسجيل الصوتي المباشر
             if speech.isListening && !speech.transcript.isEmpty {
-                Text(speech.transcript)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                transcriptBubble(speech.transcript, icon: nil)
             }
         }
     }
@@ -547,29 +592,31 @@ struct MainView: View {
     // MARK: ── أزرار التبديل ─────────────────────────────────────────────
     @ViewBuilder
     private func toggleCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: Theme.Space.xs + 2) {
             Text(title)
-                .font(.caption).foregroundColor(.secondary)
+                .font(Theme.Font.caption)
+                .foregroundColor(Theme.Color.muted)
                 .frame(maxWidth: .infinity, alignment: .center)
             content()
         }
-        .padding(10)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .padding(Theme.Space.md)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(cornerRadius: Theme.Radius.md)
     }
 
     @ViewBuilder
     private func toggleBtn(label: String, active: Bool,
-                           activeColor: Color = .blue,
+                           activeColor: Color = Theme.Color.ink,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.subheadline.bold())
+                .font(Theme.Font.label)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(active ? activeColor : Color(.systemGray5))
-                .foregroundColor(active ? .white : Color(.label).opacity(0.35))
-                .cornerRadius(8)
+                .padding(.vertical, Theme.Space.sm)
+                .background(active ? activeColor : Theme.Color.canvas)
+                .foregroundColor(active ? Theme.Color.onAccent : Theme.Color.muted)
+                .cornerRadius(Theme.Radius.sm)
         }
         .buttonStyle(.plain)
     }
@@ -577,56 +624,58 @@ struct MainView: View {
     // MARK: ── حقل الإدخال الخام ─────────────────────────────────────────
     @ViewBuilder
     private func rawInputCard(label: String, text: Binding<String>, color: Color, isEditable: Bool) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Space.xs) {
             Text(label)
-                .font(.caption).foregroundColor(color)
+                .font(Theme.Font.caption)
+                .foregroundColor(color)
                 .lineLimit(1).minimumScaleFactor(0.7)
             if isEditable {
                 TextField("0", text: text)
                     .keyboardType(.numberPad)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(Theme.Font.displayLG)
                     .foregroundColor(color)
                     .multilineTextAlignment(.center)
                     .frame(height: 52)
                     .focused($rawFocused)
             } else {
                 Text(text.wrappedValue)
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(Theme.Font.displayLG)
                     .foregroundColor(color)
                     .frame(height: 52)
                     .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(.systemGroupedBackground))
-        .cornerRadius(10)
+        .padding(.vertical, Theme.Space.sm)
+        .background(Theme.Color.canvas)
+        .cornerRadius(Theme.Radius.sm)
     }
 
     // MARK: ── بطاقة المشاريع ────────────────────────────────────────────
     @ViewBuilder
     private func declarationsCard(title: String, dec: Binding<Declarations>, color: Color) -> some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: Theme.Space.sm) {
             Text(title)
-                .font(.caption.bold())
+                .font(Theme.Font.label)
                 .foregroundColor(color)
                 .frame(maxWidth: .infinity, alignment: .trailing)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                DecStepper(label: "سرا", value: dec.sara)
-                DecStepper(label: "خمسين", value: dec.fifty)
-                DecStepper(label: "مية", value: dec.hundred)
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Space.sm) {
+                DecStepper(label: "سرا",    value: dec.sara,    color: color)
+                DecStepper(label: "خمسين",  value: dec.fifty,   color: color)
+                DecStepper(label: "مية",    value: dec.hundred, color: color)
                 if gameType == .sun {
-                    DecStepper(label: "أربع مية", value: dec.fourHundred)
+                    DecStepper(label: "أربع مية", value: dec.fourHundred, color: color)
                 } else {
-                    DecStepper(label: "بلوت", value: dec.bloot)
+                    DecStepper(label: "بلوت",    value: dec.bloot,       color: color)
                 }
             }
         }
-        .padding(12)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .padding(Theme.Space.md)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(cornerRadius: Theme.Radius.md)
     }
 
     // MARK: ── معاينة النتيجة ────────────────────────────────────────────
@@ -634,11 +683,12 @@ struct MainView: View {
     private func resultPreview(_ r: RoundResult) -> some View {
         let t1 = buyerIsTeam1 ? r.buyerFinal : r.otherFinal
         let t2 = buyerIsTeam1 ? r.otherFinal : r.buyerFinal
+        let accentColor: Color = r.buyerWon ? Theme.Color.success : Theme.Color.team2
 
-        VStack(spacing: 10) {
-            HStack(spacing: 6) {
+        VStack(spacing: Theme.Space.md) {
+            HStack(spacing: Theme.Space.xs + 2) {
                 Image(systemName: r.buyerWon ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundColor(r.buyerWon ? .green : .red)
+                    .foregroundColor(accentColor)
                 let bName = buyerIsTeam1 ? vm.team1Name : vm.team2Name
                 let oName = buyerIsTeam1 ? vm.team2Name : vm.team1Name
                 if r.isKaboot {
@@ -650,64 +700,68 @@ struct MainView: View {
                 }
                 if r.isDobble {
                     Text("x2")
-                        .font(.caption.bold())
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.purple.opacity(0.15))
-                        .foregroundColor(.purple)
-                        .cornerRadius(6)
+                        .font(Theme.Font.micro)
+                        .padding(.horizontal, Theme.Space.xs + 2)
+                        .padding(.vertical, Theme.Space.xxs)
+                        .background(Theme.Color.dobble.opacity(0.12))
+                        .foregroundColor(Theme.Color.dobble)
+                        .cornerRadius(Theme.Radius.xs)
                 }
             }
-            .font(.subheadline.bold())
-            .foregroundColor(r.buyerWon ? .green : .red)
+            .font(Theme.Font.label)
+            .foregroundColor(accentColor)
             .frame(maxWidth: .infinity)
 
             if !r.isKaboot && r.buyerWon {
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.Space.xs) {
                     Text("أوراق: \(String(format: "%d", r.buyerCardPts))")
                     if r.buyerDecPts > 0 { Text("+ مشاريع: \(String(format: "%d", r.buyerDecPts))") }
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(Theme.Font.caption)
+                .foregroundColor(Theme.Color.muted)
             }
 
-            Divider()
+            Rectangle()
+                .fill(Theme.Color.border)
+                .frame(height: 1)
 
             HStack(spacing: 0) {
-                VStack(spacing: 2) {
-                    Text(vm.team1Name).font(.caption).foregroundColor(.secondary)
-                    Text(String(format: "%d", t1)).font(.title2.bold()).foregroundColor(c1)
-                    Text("بنط").font(.caption2).foregroundColor(c1.opacity(0.5))
+                VStack(spacing: Theme.Space.xxs) {
+                    Text(vm.team1Name).font(Theme.Font.caption).foregroundColor(Theme.Color.muted)
+                    Text(String(format: "%d", t1)).font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.Color.team1)
+                    Text("بنط").font(Theme.Font.micro).foregroundColor(Theme.Color.team1.opacity(0.5))
                 }
                 .frame(maxWidth: .infinity)
 
-                Divider().frame(height: 44)
+                Rectangle()
+                    .fill(Theme.Color.border)
+                    .frame(width: 1, height: 44)
 
-                VStack(spacing: 2) {
-                    Text(vm.team2Name).font(.caption).foregroundColor(.secondary)
-                    Text(String(format: "%d", t2)).font(.title2.bold()).foregroundColor(c2)
-                    Text("بنط").font(.caption2).foregroundColor(c2.opacity(0.5))
+                VStack(spacing: Theme.Space.xxs) {
+                    Text(vm.team2Name).font(Theme.Font.caption).foregroundColor(Theme.Color.muted)
+                    Text(String(format: "%d", t2)).font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.Color.team2)
+                    Text("بنط").font(Theme.Font.micro).foregroundColor(Theme.Color.team2.opacity(0.5))
                 }
                 .frame(maxWidth: .infinity)
             }
 
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Space.xs) {
                 Text("المجموع:")
-                    .font(.caption).foregroundColor(.secondary)
+                    .font(Theme.Font.caption).foregroundColor(Theme.Color.muted)
                 Text(String(format: "%d", vm.team1Total + t1))
-                    .font(.caption.bold()).foregroundColor(c1)
+                    .font(Theme.Font.label).foregroundColor(Theme.Color.team1)
                 Text("—")
-                    .font(.caption).foregroundColor(.secondary)
+                    .font(Theme.Font.caption).foregroundColor(Theme.Color.muted)
                 Text(String(format: "%d", vm.team2Total + t2))
-                    .font(.caption.bold()).foregroundColor(c2)
+                    .font(Theme.Font.label).foregroundColor(Theme.Color.team2)
             }
         }
-        .padding(14)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(r.buyerWon ? Color.green.opacity(0.3) : Color.red.opacity(0.3), lineWidth: 1.5)
-        )
+        .padding(Theme.Space.md + 2)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(accentColor.opacity(0.3), cornerRadius: Theme.Radius.md)
     }
 
     // MARK: ── الحفظ التفصيلي ────────────────────────────────────────────
@@ -738,6 +792,7 @@ struct MainView: View {
     // MARK: ── ميكروفون التفصيلي (API) ──────────────────────────────────
     private func handleMicButton() {
         voiceError = nil
+        Theme.Haptic.light()
 
         if speech.isListening {
             let text = speech.stop()
@@ -784,81 +839,78 @@ struct MainView: View {
     @ViewBuilder
     private var editRoundSheet: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack(spacing: Theme.Space.xl) {
                 if let round = editingRound {
                     Text("تعديل الجولة \(String(format: "%d", round.number))")
-                        .font(.title2.bold())
-                        .padding(.top, 20)
+                        .font(Theme.Font.title)
+                        .foregroundColor(Theme.Color.ink)
+                        .padding(.top, Theme.Space.xl)
 
-                    HStack(spacing: 10) {
-                        VStack(spacing: 4) {
-                            Text(vm.team1Name).font(.caption).foregroundColor(c1)
-                            TextField("0", text: $editT1Text)
-                                .keyboardType(.numberPad)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 38, weight: .bold, design: .rounded))
-                                .foregroundColor(c1)
-                                .multilineTextAlignment(.center)
-                                .frame(height: 52)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color(.systemGroupedBackground))
-                        .cornerRadius(10)
-
-                        VStack(spacing: 4) {
-                            Text(vm.team2Name).font(.caption).foregroundColor(c2)
-                            TextField("0", text: $editT2Text)
-                                .keyboardType(.numberPad)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 38, weight: .bold, design: .rounded))
-                                .foregroundColor(c2)
-                                .multilineTextAlignment(.center)
-                                .frame(height: 52)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color(.systemGroupedBackground))
-                        .cornerRadius(10)
+                    HStack(spacing: Theme.Space.md) {
+                        editRoundField(label: vm.team1Name, text: $editT1Text, color: Theme.Color.team1)
+                        editRoundField(label: vm.team2Name, text: $editT2Text, color: Theme.Color.team2)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, Theme.Space.lg)
 
                     Button {
                         if let t1 = Int(editT1Text), let t2 = Int(editT2Text) {
+                            Theme.Haptic.success()
                             vm.updateRound(id: round.id, t1: t1, t2: t2)
                             showEditSheet = false
                         }
                     } label: {
                         Text("حفظ التعديل")
-                            .font(.headline)
+                            .font(Theme.Font.title)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .padding(.vertical, Theme.Space.md + 2)
+                            .background(Theme.Color.accent)
+                            .foregroundColor(Theme.Color.onAccent)
+                            .cornerRadius(Theme.Radius.md)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, Theme.Space.lg)
 
                     Button(role: .destructive) {
+                        Theme.Haptic.warning()
                         vm.deleteRound(id: round.id)
                         showEditSheet = false
                     } label: {
                         Text("حذف الجولة")
-                            .font(.subheadline)
-                            .foregroundColor(.red)
+                            .font(Theme.Font.body)
+                            .foregroundColor(Theme.Color.team2)
                     }
 
                     Spacer()
                 }
             }
+            .background(Theme.Color.canvas.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("إلغاء") { showEditSheet = false }
+                        .foregroundColor(Theme.Color.ink)
                 }
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    @ViewBuilder
+    private func editRoundField(label: String, text: Binding<String>, color: Color) -> some View {
+        VStack(spacing: Theme.Space.xs) {
+            Text(label).font(Theme.Font.caption).foregroundColor(color)
+            TextField("0", text: text)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.plain)
+                .font(Theme.Font.displayLG)
+                .foregroundColor(color)
+                .multilineTextAlignment(.center)
+                .frame(height: 52)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Theme.Space.sm)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(cornerRadius: Theme.Radius.md)
     }
 
     private func startEditRound(_ round: Round) {
@@ -873,50 +925,60 @@ struct MainView: View {
 struct DecStepper: View {
     let label: String
     @Binding var value: Int
+    var color: Color = Theme.Color.ink
 
     var body: some View {
         Group {
             if value == 0 {
-                Button { value = 1 } label: {
+                Button {
+                    Theme.Haptic.light()
+                    value = 1
+                } label: {
                     Text(label)
-                        .font(.caption.bold())
-                        .foregroundColor(.secondary)
+                        .font(Theme.Font.label)
+                        .foregroundColor(Theme.Color.muted)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(8)
+                        .padding(.vertical, Theme.Space.sm + 1)
+                        .background(Theme.Color.canvas)
+                        .cornerRadius(Theme.Radius.sm)
                 }
                 .buttonStyle(.plain)
             } else {
                 HStack(spacing: 5) {
                     Text(label)
-                        .font(.caption.bold())
-                        .foregroundColor(.blue)
+                        .font(Theme.Font.label)
+                        .foregroundColor(color)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .lineLimit(1).minimumScaleFactor(0.7)
 
-                    Button { value = max(0, value - 1) } label: {
+                    Button {
+                        Theme.Haptic.light()
+                        value = max(0, value - 1)
+                    } label: {
                         Image(systemName: "minus.circle.fill")
                             .font(.title3)
-                            .foregroundColor(.blue)
+                            .foregroundColor(color)
                     }
                     .buttonStyle(.plain)
 
                     Text(String(format: "%d", value))
-                        .font(.subheadline.bold())
+                        .font(Theme.Font.label)
                         .frame(width: 22)
 
-                    Button { value += 1 } label: {
+                    Button {
+                        Theme.Haptic.light()
+                        value += 1
+                    } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
-                            .foregroundColor(.blue)
+                            .foregroundColor(color)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(Color.blue.opacity(0.08))
-                .cornerRadius(8)
+                .padding(.horizontal, Theme.Space.sm)
+                .padding(.vertical, Theme.Space.sm - 2)
+                .background(color.opacity(0.08))
+                .cornerRadius(Theme.Radius.sm)
             }
         }
     }
@@ -929,28 +991,29 @@ struct ScoreCard: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: Theme.Space.xxs) {
             TextField("الاسم", text: $name)
-                .font(.footnote.bold())
-                .foregroundColor(.secondary)
+                .font(Theme.Font.label)
+                .foregroundColor(Theme.Color.muted)
                 .multilineTextAlignment(.center)
 
             Text(String(format: "%d", score))
-                .font(.system(size: 64, weight: .heavy))
+                .font(Theme.Font.displayXL)
                 .foregroundColor(color)
                 .minimumScaleFactor(0.4)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity)
 
             Text("بنط")
-                .font(.caption2)
+                .font(Theme.Font.micro)
                 .foregroundColor(color.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 18).padding(.horizontal, 8)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .padding(.vertical, Theme.Space.lg + 2)
+        .padding(.horizontal, Theme.Space.sm)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.lg)
+        .themeCardShadow()
     }
 }
 
@@ -961,17 +1024,18 @@ struct ProgressBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color(.systemGray5))
+                Capsule().fill(Theme.Color.border)
                 HStack(spacing: 0) {
                     Spacer()
-                    Capsule().fill(Color.red)
+                    Capsule().fill(Theme.Color.team2)
                         .frame(width: bw(geo.size.width, score: t2))
                 }
-                Capsule().fill(Color.blue)
+                Capsule().fill(Theme.Color.team1)
                     .frame(width: bw(geo.size.width, score: t1))
             }
         }
-        .frame(height: 6).padding(.vertical, 4)
+        .frame(height: 6)
+        .padding(.vertical, Theme.Space.xs)
     }
 
     private func bw(_ total: CGFloat, score: Int) -> CGFloat {
@@ -988,68 +1052,59 @@ struct RoundHistory: View {
         VStack(spacing: 0) {
             HStack {
                 Text(vm.team1Name).frame(maxWidth: .infinity, alignment: .trailing)
-                Text("ج").frame(width: 54, alignment: .center).foregroundColor(.secondary)
+                Text("ج").frame(width: 54, alignment: .center)
                 Text(vm.team2Name).frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(.caption.bold()).foregroundColor(.secondary)
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .background(Color(.systemBackground))
-            .cornerRadius(12, corners: [.topLeft, .topRight])
+            .font(Theme.Font.label)
+            .foregroundColor(Theme.Color.muted)
+            .padding(.horizontal, Theme.Space.lg)
+            .padding(.vertical, Theme.Space.md)
 
-            Divider()
+            Rectangle().fill(Theme.Color.border).frame(height: 1)
 
             ForEach(Array(vm.rounds.reversed().enumerated()), id: \.element.id) { idx, round in
                 VStack(spacing: 0) {
                     HStack {
                         Text(String(format: "%d", round.team1Score))
-                            .font(.body.bold()).foregroundColor(.blue)
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(Theme.Color.team1)
                             .frame(maxWidth: .infinity, alignment: .trailing)
 
                         VStack(spacing: 1) {
                             Text(String(format: "%d", round.number))
-                                .font(.caption).foregroundColor(.secondary)
+                                .font(Theme.Font.caption).foregroundColor(Theme.Color.muted)
                             HStack(spacing: 3) {
-                                Text(round.gameType.rawValue)
-                                    .font(.caption2).foregroundColor(.secondary)
                                 if round.isDobble {
-                                    Text("x2").font(.caption2).foregroundColor(.purple)
+                                    Text("x2").font(Theme.Font.micro).foregroundColor(Theme.Color.dobble)
                                 }
                                 Image(systemName: round.buyerWon ? "checkmark" : "xmark")
                                     .font(.system(size: 9, weight: .bold))
-                                    .foregroundColor(round.buyerWon ? .green : .red)
+                                    .foregroundColor(round.buyerWon ? Theme.Color.success : Theme.Color.team2)
                             }
                         }
                         .frame(width: 54)
 
                         Text(String(format: "%d", round.team2Score))
-                            .font(.body.bold()).foregroundColor(.red)
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(Theme.Color.team2)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(Color(.systemBackground))
+                    .padding(.horizontal, Theme.Space.lg)
+                    .padding(.vertical, Theme.Space.md)
                     .contentShape(Rectangle())
-                    .onTapGesture { onEdit?(round) }
+                    .onTapGesture {
+                        Theme.Haptic.light()
+                        onEdit?(round)
+                    }
 
-                    if idx < vm.rounds.count - 1 { Divider() }
+                    if idx < vm.rounds.count - 1 {
+                        Rectangle().fill(Theme.Color.border).frame(height: 1)
+                    }
                 }
             }
         }
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-    }
-}
-
-// MARK: ── Helpers ─────────────────────────────────────────────────────────
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat; var corners: UIRectCorner
-    func path(in rect: CGRect) -> Path {
-        Path(UIBezierPath(roundedRect: rect, byRoundingCorners: corners,
-                          cornerRadii: CGSize(width: radius, height: radius)).cgPath)
+        .background(Theme.Color.surface)
+        .cornerRadius(Theme.Radius.md)
+        .themeHairline(cornerRadius: Theme.Radius.md)
     }
 }

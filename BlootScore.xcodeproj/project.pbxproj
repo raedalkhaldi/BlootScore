@@ -19,6 +19,7 @@
 		00000000000000000000002B /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002A /* VoiceRecorder.swift */; };
 		00000000000000000000002D /* VoiceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002C /* VoiceStore.swift */; };
 		00000000000000000000002F /* AdminSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002E /* AdminSettingsView.swift */; };
+		000000000000000000000034 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000035 /* Theme.swift */; };
 		000000000000000000000031 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* GoogleService-Info.plist */; };
 		000000000000000000000033 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* PrivacyInfo.xcprivacy */; };
 		000000000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000010 /* Assets.xcassets */; };
@@ -37,6 +38,7 @@
 		00000000000000000000002A /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
 		00000000000000000000002C /* VoiceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceStore.swift; sourceTree = "<group>"; };
 		00000000000000000000002E /* AdminSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminSettingsView.swift; sourceTree = "<group>"; };
+		000000000000000000000035 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		000000000000000000000030 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		000000000000000000000032 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		000000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000012 /* BlootApp.swift */,
+				000000000000000000000035 /* Theme.swift */,
 				000000000000000000000013 /* GameViewModel.swift */,
 				000000000000000000000014 /* MainView.swift */,
 				000000000000000000000015 /* WinnerView.swift */,
@@ -160,6 +163,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				000000000000000000000016 /* BlootApp.swift in Sources */,
+				000000000000000000000034 /* Theme.swift in Sources */,
 				000000000000000000000017 /* GameViewModel.swift in Sources */,
 				000000000000000000000018 /* MainView.swift in Sources */,
 				000000000000000000000019 /* WinnerView.swift in Sources */,

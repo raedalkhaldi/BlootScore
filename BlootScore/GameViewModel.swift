@@ -61,8 +61,8 @@ struct Round: Identifiable {
 
 // MARK: - ViewModel
 class GameViewModel: ObservableObject {
-    @Published var team1Name = "نحن"
-    @Published var team2Name = "هم"
+    @Published var team1Name = "لنا"
+    @Published var team2Name = "لهم"
     @Published var rounds:      [Round] = []
     @Published var isGameOver = false
     @Published var winnerIndex = 0          // 1 أو 2
@@ -239,7 +239,7 @@ class GameViewModel: ObservableObject {
 
     func fullReset() {
         rounds.removeAll(); isGameOver = false; winnerIndex = 0
-        team1Name = "نحن"; team2Name = "هم"
+        team1Name = "لنا"; team2Name = "لهم"
     }
 
     private func checkWinner() {

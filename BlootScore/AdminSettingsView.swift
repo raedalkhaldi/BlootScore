@@ -29,11 +29,13 @@ struct AdminSettingsView: View {
                     settingsList
                 }
             }
+            .background(Theme.Color.canvas.ignoresSafeArea())
             .navigationTitle("إعدادات الأصوات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("إغلاق") { dismiss() }
+                        .foregroundColor(Theme.Color.ink)
                 }
             }
             .task {
@@ -67,25 +69,32 @@ struct AdminSettingsView: View {
 
     // MARK: Views
     private func loading(_ msg: String) -> some View {
-        VStack(spacing: 12) { ProgressView(); Text(msg).foregroundColor(.secondary) }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack(spacing: Theme.Space.md) {
+            ProgressView()
+            Text(msg)
+                .font(Theme.Font.body)
+                .foregroundColor(Theme.Color.muted)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var settingsList: some View {
         List {
             if store.isAdmin {
-                Section(header: Text("وضع الأدمن")) {
+                Section(header: Text("وضع الأدمن").foregroundColor(Theme.Color.muted)) {
                     Toggle(isOn: $adminMode) {
-                        VStack(alignment: .trailing, spacing: 2) {
+                        VStack(alignment: .trailing, spacing: Theme.Space.xxs) {
                             Text("تعديل الأصوات الافتراضية")
-                                .font(.headline)
+                                .font(Theme.Font.title)
+                                .foregroundColor(Theme.Color.ink)
                             Text(adminMode
                                  ? "أي تسجيل جديد يُرفع كافتراضي لكل المستخدمين"
                                  : "التسجيل يُحفظ محلياً على هذا الجهاز فقط")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(Theme.Font.caption)
+                                .foregroundColor(Theme.Color.muted)
                         }
                     }
+                    .tint(Theme.Color.accent)
                 }
             } else if store.adminNotClaimed {
                 Section {
@@ -97,18 +106,22 @@ struct AdminSettingsView: View {
                     } label: {
                         Label("تعيين هذا الجهاز كأدمن (أول مرة فقط)",
                               systemImage: "person.badge.key")
+                            .foregroundColor(Theme.Color.accent)
                     }
                 }
             }
 
-            Section(header: Text("الحالات"),
-                    footer: Text("التسجيل الجديد يستبدل الصوت الافتراضي على جهازك فقط. استخدم \"استعادة الافتراضي\" للرجوع للصوت الأصلي.")) {
+            Section(header: Text("الحالات").foregroundColor(Theme.Color.muted),
+                    footer: Text("التسجيل الجديد يستبدل الصوت الافتراضي على جهازك فقط. استخدم \"استعادة الافتراضي\" للرجوع للصوت الأصلي.")
+                        .foregroundColor(Theme.Color.muted)) {
                 ForEach(VoiceState.allCases) { state in
                     row(for: state)
                 }
             }
         }
         .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Theme.Color.canvas)
     }
 
     private func row(for state: VoiceState) -> some View {
@@ -118,21 +131,25 @@ struct AdminSettingsView: View {
         let isBusy = busyKey == state.key
         let hasLocal = store.hasLocalOverride(state)
 
-        return VStack(alignment: .trailing, spacing: 8) {
+        return VStack(alignment: .trailing, spacing: Theme.Space.sm) {
             HStack {
                 Toggle(isOn: Binding(
                     get: { enabled },
                     set: { newVal in Task { await toggle(state, newVal) } }
                 )) {
                     VStack(alignment: .trailing, spacing: 3) {
-                        Text(state.title).font(.headline)
+                        Text(state.title)
+                            .font(Theme.Font.title)
+                            .foregroundColor(Theme.Color.ink)
                         sourceBadge(source)
                     }
                 }
+                .tint(Theme.Color.accent)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Space.sm) {
                 Button {
+                    Theme.Haptic.light()
                     if isRecordingThis {
                         if let url = recorder.stop() {
                             Task { await saveRecorded(state: state, url: url) }
@@ -145,10 +162,10 @@ struct AdminSettingsView: View {
                 } label: {
                     Label(isRecordingThis ? "إيقاف" : "تسجيل",
                           systemImage: isRecordingThis ? "stop.circle.fill" : "mic.circle.fill")
-                        .font(.subheadline)
+                        .font(Theme.Font.body)
                 }
                 .buttonStyle(.bordered)
-                .tint(isRecordingThis ? .red : .blue)
+                .tint(isRecordingThis ? Theme.Color.micActive : Theme.Color.accent)
                 .disabled(isBusy || (recorder.isRecording && !isRecordingThis))
 
                 Button {
@@ -156,25 +173,29 @@ struct AdminSettingsView: View {
                     showPicker = true
                 } label: {
                     Label("ملف", systemImage: "square.and.arrow.up")
-                        .font(.subheadline)
+                        .font(Theme.Font.body)
                 }
                 .buttonStyle(.bordered)
+                .tint(Theme.Color.ink)
                 .disabled(isBusy || recorder.isRecording)
 
                 Button {
                     store.play(state)
                 } label: {
-                    Image(systemName: "play.circle.fill").font(.title3)
+                    Image(systemName: "play.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(Theme.Color.accent)
                 }
                 .disabled(source == .none || isBusy)
 
                 if hasLocal {
                     Button {
+                        Theme.Haptic.warning()
                         store.restoreDefault(state)
                     } label: {
                         Image(systemName: "arrow.uturn.backward.circle.fill")
                             .font(.title3)
-                            .foregroundColor(.orange)
+                            .foregroundColor(Theme.Color.warning)
                     }
                     .disabled(isBusy)
                 }
@@ -182,22 +203,29 @@ struct AdminSettingsView: View {
                 if isBusy { ProgressView().scaleEffect(0.8) }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, Theme.Space.sm - 2)
+        .listRowBackground(Theme.Color.surface)
     }
 
     @ViewBuilder
     private func sourceBadge(_ source: VoiceSource) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Theme.Space.xs) {
             switch source {
             case .custom:
-                Circle().fill(Color.blue).frame(width: 8, height: 8)
-                Text("مخصّص (محلي)").font(.caption).foregroundColor(.blue)
+                Circle().fill(Theme.Color.team1).frame(width: 8, height: 8)
+                Text("مخصّص (محلي)")
+                    .font(Theme.Font.caption)
+                    .foregroundColor(Theme.Color.team1)
             case .defaultAdmin:
-                Circle().fill(Color.green).frame(width: 8, height: 8)
-                Text("الافتراضي").font(.caption).foregroundColor(.secondary)
+                Circle().fill(Theme.Color.success).frame(width: 8, height: 8)
+                Text("الافتراضي")
+                    .font(Theme.Font.caption)
+                    .foregroundColor(Theme.Color.muted)
             case .none:
-                Circle().fill(Color.gray.opacity(0.4)).frame(width: 8, height: 8)
-                Text("لا يوجد صوت").font(.caption).foregroundColor(.secondary)
+                Circle().fill(Theme.Color.muted.opacity(0.4)).frame(width: 8, height: 8)
+                Text("لا يوجد صوت")
+                    .font(Theme.Font.caption)
+                    .foregroundColor(Theme.Color.muted)
             }
         }
     }
